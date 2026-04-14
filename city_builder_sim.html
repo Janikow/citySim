@@ -1,0 +1,571 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body,html{background:#0d0f14;color:#c8cdd8;font-family:'Courier New',monospace;font-size:13px}
+#app{display:flex;flex-direction:column;height:100vh;min-height:600px}
+#topbar{background:#13161e;border-bottom:1px solid #2a2f3d;padding:6px 12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+#topbar h1{color:#7eb8f7;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-right:8px}
+.stat-pill{background:#1a1e2a;border:1px solid #2a2f3d;padding:3px 10px;border-radius:3px;font-size:12px;display:flex;gap:6px;align-items:center}
+.stat-pill span:first-child{color:#666}
+.stat-pill .val{font-weight:700}
+.green{color:#5bbf7a}.red{color:#e05555}.amber{color:#e8a93a}.blue{color:#7eb8f7}.teal{color:#3dcfb5}
+#main{display:flex;flex:1;overflow:hidden}
+#sidebar{width:260px;min-width:260px;background:#13161e;border-right:1px solid #2a2f3d;display:flex;flex-direction:column;overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid #2a2f3d}
+.tab{flex:1;padding:7px 4px;text-align:center;cursor:pointer;font-size:11px;color:#666;border-bottom:2px solid transparent;letter-spacing:1px;text-transform:uppercase}
+.tab.active{color:#7eb8f7;border-bottom-color:#7eb8f7;background:#0d1018}
+.panel{flex:1;overflow-y:auto;padding:10px}
+.panel::-webkit-scrollbar{width:4px}.panel::-webkit-scrollbar-track{background:#13161e}.panel::-webkit-scrollbar-thumb{background:#2a2f3d}
+.section-hdr{color:#7eb8f7;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin:10px 0 6px;border-bottom:1px solid #1e2330;padding-bottom:4px}
+.build-btn{display:flex;align-items:center;gap:8px;background:#1a1e2a;border:1px solid #2a2f3d;padding:6px 8px;margin-bottom:4px;cursor:pointer;border-radius:2px;width:100%;text-align:left;color:#c8cdd8;transition:all 0.15s}
+.build-btn:hover{border-color:#7eb8f7;background:#1e2433;color:#fff}
+.build-btn.selected{border-color:#3dcfb5;background:#1a2820}
+.build-btn .icon{font-size:16px;width:20px;text-align:center}
+.build-btn .info{flex:1}
+.build-btn .bname{font-size:12px;font-weight:700}
+.build-btn .bcost{font-size:11px;color:#e8a93a}
+.build-btn .bdesc{font-size:10px;color:#666;margin-top:1px}
+.meter-row{margin-bottom:8px}
+.meter-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+.meter-bg{background:#1a1e2a;border:1px solid #2a2f3d;height:8px;border-radius:1px;overflow:hidden}
+.meter-fill{height:100%;transition:width 0.5s;border-radius:1px}
+.prob-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #1a1e2a;font-size:11px}
+.prob-icon{width:16px;text-align:center;font-size:14px}
+.prob-name{flex:1;color:#c8cdd8}
+.prob-val{font-weight:700;min-width:30px;text-align:right}
+.log-entry{font-size:11px;padding:3px 0;border-bottom:1px solid #1a1e2a;color:#8892a4;line-height:1.4}
+.log-entry .tick{color:#3d4560;margin-right:4px}
+.log-entry.warn{color:#e8a93a}.log-entry.danger{color:#e05555}.log-entry.good{color:#5bbf7a}
+#map-area{flex:1;background:#0d0f14;display:flex;flex-direction:column;overflow:hidden;position:relative}
+#map-header{background:#13161e;border-bottom:1px solid #2a2f3d;padding:6px 12px;display:flex;align-items:center;gap:12px;font-size:11px;color:#666}
+#map-header b{color:#c8cdd8}
+#canvas-wrap{flex:1;overflow:hidden;position:relative;cursor:crosshair}
+canvas{display:block}
+#tooltip{position:absolute;background:#1a1e2a;border:1px solid #2a2f3d;padding:6px 10px;font-size:11px;pointer-events:none;display:none;z-index:10;border-radius:2px;min-width:120px;max-width:180px;line-height:1.6}
+#tooltip b{color:#7eb8f7;display:block;margin-bottom:2px}
+#rightbar{width:200px;min-width:200px;background:#13161e;border-left:1px solid #2a2f3d;overflow-y:auto;padding:10px}
+#rightbar::-webkit-scrollbar{width:4px}.#rightbar::-webkit-scrollbar-thumb{background:#2a2f3d}
+.mini-stat{background:#1a1e2a;border:1px solid #2a2f3d;padding:7px 10px;margin-bottom:6px;border-radius:2px}
+.mini-stat .ms-label{font-size:10px;color:#666;letter-spacing:1px;text-transform:uppercase}
+.mini-stat .ms-val{font-size:20px;font-weight:700;margin-top:2px}
+.policy-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1a1e2a;font-size:11px}
+.policy-row label{color:#8892a4;flex:1}
+.toggle{position:relative;width:32px;height:16px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.slider2{position:absolute;top:0;left:0;right:0;bottom:0;background:#2a2f3d;border-radius:8px;cursor:pointer;transition:0.2s}
+.slider2:before{content:'';position:absolute;height:12px;width:12px;left:2px;bottom:2px;background:#666;border-radius:50%;transition:0.2s}
+.toggle input:checked + .slider2{background:#3dcfb15}
+.toggle input:checked + .slider2{background:#3dcfb1}
+.toggle input:checked + .slider2:before{transform:translateX(16px);background:#fff}
+#bottom-bar{background:#13161e;border-top:1px solid #2a2f3d;padding:5px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.action-btn{background:#1a1e2a;border:1px solid #2a2f3d;color:#c8cdd8;padding:4px 12px;cursor:pointer;font-family:'Courier New',monospace;font-size:12px;border-radius:2px;letter-spacing:1px;transition:all 0.15s}
+.action-btn:hover{border-color:#7eb8f7;color:#7eb8f7}
+.action-btn.primary{border-color:#3dcfb1;color:#3dcfb1}
+.action-btn.primary:hover{background:#1a2820}
+.action-btn.danger{border-color:#e05555;color:#e05555}
+.speed-btn{background:#1a1e2a;border:1px solid #2a2f3d;color:#666;padding:4px 8px;cursor:pointer;font-family:monospace;font-size:12px;border-radius:2px;transition:all 0.15s}
+.speed-btn.active{border-color:#e8a93a;color:#e8a93a;background:#1e1a10}
+#turn-display{color:#666;font-size:11px;margin-left:auto}
+#turn-display b{color:#c8cdd8}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center}
+#modal-overlay.show{display:flex}
+#modal{background:#13161e;border:1px solid #2a2f3d;padding:20px;max-width:400px;width:90%;border-radius:2px}
+#modal h2{color:#7eb8f7;font-size:14px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+#modal p{color:#8892a4;font-size:12px;line-height:1.7;margin-bottom:8px}
+#modal-btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.hidden{display:none}
+</style>
+
+<div id="app">
+<div id="topbar">
+  <h1>&#127979; CityBuilder</h1>
+  <div class="stat-pill"><span>&#128184; Treasury</span><span class="val amber" id="st-money">$12,000</span></div>
+  <div class="stat-pill"><span>&#128101; Pop</span><span class="val green" id="st-pop">0</span></div>
+  <div class="stat-pill"><span>&#128200; Approval</span><span class="val green" id="st-approval">72%</span></div>
+  <div class="stat-pill"><span>&#128736; Jobs</span><span class="val teal" id="st-jobs">0 / 0</span></div>
+  <div class="stat-pill"><span>&#128675; Traffic</span><span class="val green" id="st-traffic">Low</span></div>
+  <div class="stat-pill"><span>Year <b id="st-year">1</b> / Month <b id="st-month">Jan</b></span></div>
+</div>
+
+<div id="main">
+  <div id="sidebar">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('build')" id="tab-build">BUILD</div>
+      <div class="tab" onclick="switchTab('stats')" id="tab-stats">CITY</div>
+      <div class="tab" onclick="switchTab('log')" id="tab-log">LOG</div>
+    </div>
+    <div class="panel" id="panel-build">
+      <div class="section-hdr">Residential</div>
+      <button class="build-btn" onclick="selectTool('house')" id="btn-house">
+        <span class="icon">&#127968;</span><div class="info"><div class="bname">House</div><div class="bcost">$400</div><div class="bdesc">+8 pop cap, +happiness</div></div>
+      </button>
+      <button class="build-btn" onclick="selectTool('apartment')" id="btn-apartment">
+        <span class="icon">&#127970;</span><div class="info"><div class="bname">Apartment</div><div class="bcost">$1,200</div><div class="bdesc">+25 pop cap, dense</div></div>
+      </button>
+      <div class="section-hdr">Commercial</div>
+      <button class="build-btn" onclick="selectTool('shop')" id="btn-shop">
+        <span class="icon">&#127978;</span><div class="info"><div class="bname">Shop</div><div class="bcost">$600</div><div class="bdesc">+10 jobs, +tax rev</div></div>
+      </button>
+      <button class="build-btn" onclick="selectTool('office')" id="btn-office">
+        <span class="icon">&#127970;</span><div class="info"><div class="bname">Office</div><div class="bcost">$2,000</div><div class="bdesc">+35 jobs, high wages</div></div>
+      </button>
+      <div class="section-hdr">Industrial</div>
+      <button class="build-btn" onclick="selectTool('factory')" id="btn-factory">
+        <span class="icon">&#127981;</span><div class="info"><div class="bname">Factory</div><div class="bcost">$2,500</div><div class="bdesc">+50 jobs, -happiness</div></div>
+      </button>
+      <div class="section-hdr">Infrastructure</div>
+      <button class="build-btn" onclick="selectTool('road')" id="btn-road">
+        <span class="icon">&#9632;</span><div class="info"><div class="bname">Road</div><div class="bcost">$100</div><div class="bdesc">Reduces traffic</div></div>
+      </button>
+      <button class="build-btn" onclick="selectTool('park')" id="btn-park">
+        <span class="icon">&#127795;</span><div class="info"><div class="bname">Park</div><div class="bcost">$300</div><div class="bdesc">+happiness, +15 pop growth</div></div>
+      </button>
+      <button class="build-btn" onclick="selectTool('school')" id="btn-school">
+        <span class="icon">&#127979;</span><div class="info"><div class="bname">School</div><div class="bcost">$1,500</div><div class="bdesc">+education, +happiness</div></div>
+      </button>
+      <button class="build-btn" onclick="selectTool('hospital')" id="btn-hospital">
+        <span class="icon">&#127973;</span><div class="info"><div class="bname">Hospital</div><div class="bcost">$3,000</div><div class="bdesc">+health, +happiness</div></div>
+      </button>
+      <button class="build-btn" onclick="selectTool('police')" id="btn-police">
+        <span class="icon">&#128268;</span><div class="info"><div class="bname">Police Stn</div><div class="bcost">$1,800</div><div class="bdesc">-crime, +safety</div></div>
+      </button>
+      <div class="section-hdr">Utilities</div>
+      <button class="build-btn" onclick="selectTool('powerplant')" id="btn-powerplant">
+        <span class="icon">&#9889;</span><div class="info"><div class="bname">Power Plant</div><div class="bcost">$4,000</div><div class="bdesc">Powers 200 tiles</div></div>
+      </button>
+      <button class="build-btn" onclick="selectTool('watertower')" id="btn-watertower">
+        <span class="icon">&#128167;</span><div class="info"><div class="bname">Water Tower</div><div class="bcost">$1,200</div><div class="bdesc">Water for 100 tiles</div></div>
+      </button>
+      <div class="section-hdr">Actions</div>
+      <button class="build-btn" onclick="selectTool('demolish')" id="btn-demolish" style="border-color:#3d1e1e">
+        <span class="icon" style="color:#e05555">&#128465;</span><div class="info"><div class="bname" style="color:#e05555">Demolish</div><div class="bcost" style="color:#e05555">-$50 refund</div><div class="bdesc">Remove a building</div></div>
+      </button>
+    </div>
+    <div class="panel hidden" id="panel-stats">
+      <div class="section-hdr">City Problems</div>
+      <div id="prob-list"></div>
+      <div class="section-hdr" style="margin-top:14px">Services</div>
+      <div class="meter-row"><div class="meter-label"><span>Power</span><span id="m-power" class="green">--</span></div><div class="meter-bg"><div class="meter-fill" id="mf-power" style="width:0%;background:#e8a93a"></div></div></div>
+      <div class="meter-row"><div class="meter-label"><span>Water</span><span id="m-water" class="blue">--</span></div><div class="meter-bg"><div class="meter-fill" id="mf-water" style="width:0%;background:#7eb8f7"></div></div></div>
+      <div class="meter-row"><div class="meter-label"><span>Education</span><span id="m-edu" class="teal">--</span></div><div class="meter-bg"><div class="meter-fill" id="mf-edu" style="width:0%;background:#3dcfb5"></div></div></div>
+      <div class="meter-row"><div class="meter-label"><span>Healthcare</span><span id="m-health" class="green">--</span></div><div class="meter-bg"><div class="meter-fill" id="mf-health" style="width:0%;background:#5bbf7a"></div></div></div>
+      <div class="meter-row"><div class="meter-label"><span>Safety</span><span id="m-safety" class="teal">--</span></div><div class="meter-bg"><div class="meter-fill" id="mf-safety" style="width:0%;background:#3dcfb5"></div></div></div>
+      <div class="section-hdr" style="margin-top:14px">Finances</div>
+      <div id="finance-breakdown" style="font-size:11px;line-height:2;color:#8892a4"></div>
+      <div class="section-hdr" style="margin-top:14px">Policies</div>
+      <div class="policy-row"><label>High Tax Rate (+30% income, -happiness)</label><label class="toggle"><input type="checkbox" id="pol-tax" onchange="updatePolicies()"><span class="slider2"></span></label></div>
+      <div class="policy-row"><label>Public Transport (-traffic, -$500/mo)</label><label class="toggle"><input type="checkbox" id="pol-transit" onchange="updatePolicies()"><span class="slider2"></span></label></div>
+      <div class="policy-row"><label>Attract Businesses (+jobs, +$300/mo)</label><label class="toggle"><input type="checkbox" id="pol-biz" onchange="updatePolicies()"><span class="slider2"></span></label></div>
+      <div class="policy-row"><label>Green Energy (-pollution, -$400/mo)</label><label class="toggle"><input type="checkbox" id="pol-green" onchange="updatePolicies()"><span class="slider2"></span></label></div>
+    </div>
+    <div class="panel hidden" id="panel-log">
+      <div class="section-hdr">Event Log</div>
+      <div id="log-list"></div>
+    </div>
+  </div>
+
+  <div id="map-area">
+    <div id="map-header">
+      <span>Selected: <b id="sel-tool">None — click BUILD to select</b></span>
+      <span style="margin-left:auto">Grid: <b id="grid-info">20×16</b></span>
+      <span>Zoom: <b>100%</b></span>
+    </div>
+    <div id="canvas-wrap">
+      <canvas id="gameCanvas"></canvas>
+      <div id="tooltip"></div>
+    </div>
+  </div>
+
+  <div id="rightbar">
+    <div class="section-hdr">Overview</div>
+    <div class="mini-stat"><div class="ms-label">Population</div><div class="ms-val green" id="rs-pop">0</div></div>
+    <div class="mini-stat"><div class="ms-label">Happiness</div><div class="ms-val" id="rs-happy">72%</div></div>
+    <div class="mini-stat"><div class="ms-label">Unemployment</div><div class="ms-val red" id="rs-unemp">0%</div></div>
+    <div class="mini-stat"><div class="ms-label">Monthly Income</div><div class="ms-val amber" id="rs-income">$0</div></div>
+    <div class="section-hdr" style="margin-top:8px">Alerts</div>
+    <div id="alert-list" style="font-size:11px;color:#e05555;line-height:1.8"></div>
+    <div class="section-hdr" style="margin-top:8px">Building Count</div>
+    <div id="bld-count" style="font-size:11px;color:#8892a4;line-height:2"></div>
+  </div>
+</div>
+
+<div id="bottom-bar">
+  <button class="action-btn primary" onclick="advanceMonth()">&#9654; Advance Month</button>
+  <button class="action-btn" onclick="selectTool(null)">&#10005; Cancel Tool</button>
+  <button class="action-btn" onclick="showEventModal()">&#9888; Trigger Event</button>
+  <button class="action-btn danger" onclick="confirmNewGame()">&#8635; New Game</button>
+  <div id="turn-display">Year <b id="bd-year">1</b>, <b id="bd-month">Jan</b> — Turn <b id="bd-turn">1</b></div>
+</div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal">
+    <h2 id="modal-title">Event</h2>
+    <p id="modal-desc"></p>
+    <div id="modal-btns"></div>
+  </div>
+</div>
+
+<script>
+const COLS=20, ROWS=16, TS=38;
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const BLDGS={
+  house:{name:'House',color:'#2a6e3e',icon:'H',cost:400,popCap:8,jobs:0,happiness:5,traffic:1,desc:'Residential: +8 pop cap'},
+  apartment:{name:'Apartment',color:'#1e5c85',icon:'A',cost:1200,popCap:25,jobs:0,happiness:2,traffic:3,desc:'Dense housing: +25 pop cap'},
+  shop:{name:'Shop',color:'#7a5c20',icon:'S',cost:600,popCap:0,jobs:10,happiness:3,traffic:2,income:80,desc:'Commerce: +10 jobs, $80/mo'},
+  office:{name:'Office',color:'#1e4875',icon:'O',cost:2000,popCap:0,jobs:35,happiness:1,traffic:5,income:250,desc:'Office: +35 jobs, $250/mo'},
+  factory:{name:'Factory',color:'#5c3a1e',icon:'F',cost:2500,popCap:0,jobs:50,happiness:-8,traffic:8,income:350,desc:'Industry: +50 jobs, -happiness'},
+  road:{name:'Road',color:'#2d3340',icon:'R',cost:100,popCap:0,jobs:0,traffic:-3,happiness:0,desc:'Road: reduces traffic'},
+  park:{name:'Park',color:'#1e5c2a',icon:'P',cost:300,popCap:0,jobs:2,happiness:12,traffic:0,popBonus:15,desc:'Park: +happiness, +pop growth'},
+  school:{name:'School',color:'#4a3a1e',icon:'E',cost:1500,popCap:0,jobs:15,happiness:6,traffic:1,edu:20,desc:'School: +education, +happiness'},
+  hospital:{name:'Hospital',color:'#3a1e4a',icon:'M',cost:3000,popCap:0,jobs:25,happiness:8,traffic:2,health:25,desc:'Hospital: +health +happiness'},
+  police:{name:'Police',color:'#1e2a4a',icon:'C',cost:1800,popCap:0,jobs:20,happiness:4,traffic:1,safety:20,desc:'Police: -crime, +safety'},
+  powerplant:{name:'Power',color:'#4a3a00',icon:'W',cost:4000,popCap:0,jobs:10,happiness:-3,traffic:3,power:200,desc:'Power plant: powers 200 tiles'},
+  watertower:{name:'Water',color:'#003a5c',icon:'T',cost:1200,popCap:0,jobs:5,happiness:2,traffic:0,water:100,desc:'Water tower: water for 100 tiles'},
+};
+let grid=[], buildings=[], money=12000, selectedTool=null;
+let population=0, popCap=0, happiness=72;
+let turn=1, year=1, monthIdx=0;
+let policies={tax:false,transit:false,biz:false,green:false};
+let log=[], events=[];
+let power=0,powerDemand=0,water=0,waterDemand=0,edu=0,health=0,safety=0;
+
+for(let r=0;r<ROWS;r++){grid[r]=[];for(let c=0;c<COLS;c++)grid[r][c]=null;}
+
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+const wrap=document.getElementById('canvas-wrap');
+
+function resize(){
+  canvas.width=wrap.clientWidth;
+  canvas.height=wrap.clientHeight;
+  draw();
+}
+window.addEventListener('resize',resize);
+
+function draw(){
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0d0f14';ctx.fillRect(0,0,W,H);
+  const offX=Math.max(0,(W-COLS*TS)/2), offY=Math.max(0,(H-ROWS*TS)/2);
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const x=offX+c*TS, y=offY+r*TS;
+      const cell=grid[r][c];
+      if(cell){
+        ctx.fillStyle=BLDGS[cell].color;
+        ctx.fillRect(x+1,y+1,TS-2,TS-2);
+        ctx.fillStyle='rgba(255,255,255,0.7)';
+        ctx.font='bold 11px Courier New';
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(BLDGS[cell].icon,x+TS/2,y+TS/2);
+      } else {
+        ctx.strokeStyle='#1a1e28';
+        ctx.lineWidth=0.5;
+        ctx.strokeRect(x,y,TS,TS);
+        ctx.fillStyle='#0f1118';
+        ctx.fillRect(x+0.5,y+0.5,TS-1,TS-1);
+      }
+    }
+  }
+  if(selectedTool && selectedTool!=='demolish'){
+    const b=BLDGS[selectedTool];
+    if(b){
+      ctx.strokeStyle='#3dcfb1';
+      ctx.lineWidth=1.5;
+      ctx.setLineDash([4,4]);
+      ctx.strokeRect(offX,offY,COLS*TS,ROWS*TS);
+      ctx.setLineDash([]);
+    }
+  }
+}
+
+function getCell(e){
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const offX=Math.max(0,(canvas.width-COLS*TS)/2);
+  const offY=Math.max(0,(canvas.height-ROWS*TS)/2);
+  const c=Math.floor((mx-offX)/TS), r=Math.floor((my-offY)/TS);
+  if(r>=0&&r<ROWS&&c>=0&&c<COLS)return{r,c,offX,offY};
+  return null;
+}
+
+canvas.addEventListener('click',e=>{
+  if(!selectedTool)return;
+  const cell=getCell(e);
+  if(!cell)return;
+  const{r,c}=cell;
+  if(selectedTool==='demolish'){
+    if(grid[r][c]){
+      const t=grid[r][c];
+      grid[r][c]=null;
+      money+=50;
+      addLog(`Demolished ${BLDGS[t].name} at (${c},${r})`,'warn');
+      recalc();draw();updateUI();
+    }
+    return;
+  }
+  const b=BLDGS[selectedTool];
+  if(!b)return;
+  if(money<b.cost){showMsg('Insufficient Funds',`You need $${b.cost} to build a ${b.name}. Current treasury: $${money}.`,[{label:'OK',fn:closeModal}]);return;}
+  if(grid[r][c]){showMsg('Tile Occupied','That tile already has a building. Demolish it first.',[{label:'OK',fn:closeModal}]);return;}
+  grid[r][c]=selectedTool;
+  money-=b.cost;
+  addLog(`Built ${b.name} at (${c},${r}) for $${b.cost}`,'good');
+  recalc();draw();updateUI();
+});
+
+const tooltip=document.getElementById('tooltip');
+canvas.addEventListener('mousemove',e=>{
+  const cell=getCell(e);
+  if(!cell){tooltip.style.display='none';return;}
+  const{r,c,offX,offY}=cell;
+  const t=grid[r][c];
+  if(t){
+    const b=BLDGS[t];
+    tooltip.style.display='block';
+    tooltip.style.left=(offX+c*TS+TS+4)+'px';
+    tooltip.style.top=(offY+r*TS)+'px';
+    tooltip.innerHTML=`<b>${b.name}</b>${b.desc}`;
+  } else {
+    if(selectedTool&&selectedTool!=='demolish'){
+      const b=BLDGS[selectedTool];
+      tooltip.style.display='block';
+      tooltip.style.left=(offX+c*TS+TS+4)+'px';
+      tooltip.style.top=(offY+r*TS)+'px';
+      tooltip.innerHTML=`<b>Build ${b.name}</b>Cost: $${b.cost}<br>${b.desc}`;
+    } else {
+      tooltip.style.display='none';
+    }
+  }
+});
+canvas.addEventListener('mouseleave',()=>tooltip.style.display='none');
+
+function recalc(){
+  popCap=0;let jobs=0,totalTraffic=0;
+  power=0;water=0;edu=0;health=0;safety=0;
+  let happinessBonus=0;
+  let bCount={};
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const t=grid[r][c];
+      if(!t)continue;
+      const b=BLDGS[t];
+      bCount[t]=(bCount[t]||0)+1;
+      popCap+=b.popCap||0;
+      jobs+=b.jobs||0;
+      totalTraffic+=b.traffic||0;
+      happinessBonus+=b.happiness||0;
+      if(b.power)power+=b.power;
+      if(b.water)water+=b.water;
+      if(b.edu)edu+=b.edu;
+      if(b.health)health+=b.health;
+      if(b.safety)safety+=b.safety;
+    }
+  }
+  if(policies.transit)totalTraffic=Math.max(0,totalTraffic-15);
+  powerDemand=Math.ceil(popCap*0.5);
+  waterDemand=Math.ceil(popCap*0.4);
+  const powerRatio=powerDemand>0?Math.min(1,power/powerDemand):1;
+  const waterRatio=waterDemand>0?Math.min(1,water/waterDemand):1;
+  let baseHappy=50+happinessBonus;
+  if(powerRatio<0.5)baseHappy-=15;
+  if(waterRatio<0.5)baseHappy-=12;
+  if(edu>50)baseHappy+=8;
+  if(health>50)baseHappy+=8;
+  if(safety>50)baseHappy+=6;
+  if(policies.tax)baseHappy-=10;
+  if(policies.green)baseHappy+=5;
+  const trafficLevel=totalTraffic>60?'Critical':totalTraffic>35?'High':totalTraffic>15?'Medium':'Low';
+  if(trafficLevel==='Critical')baseHappy-=12;
+  else if(trafficLevel==='High')baseHappy-=6;
+  happiness=Math.min(100,Math.max(0,baseHappy));
+  if(policies.tax)jobs=Math.floor(jobs*0.9);
+  if(policies.biz)jobs=Math.floor(jobs*1.15);
+  const employed=Math.min(population,jobs);
+  const unemp=population>0?Math.max(0,Math.round((1-(employed/population))*100)):0;
+  const jobFill=`${employed} / ${jobs}`;
+
+  document.getElementById('st-traffic').textContent=trafficLevel;
+  document.getElementById('st-traffic').className='val '+(trafficLevel==='Critical'?'red':trafficLevel==='High'?'amber':trafficLevel==='Medium'?'amber':'green');
+  document.getElementById('st-jobs').textContent=jobFill;
+  document.getElementById('st-approval').textContent=happiness+'%';
+  document.getElementById('st-approval').className='val '+(happiness>65?'green':happiness>40?'amber':'red');
+
+  const probList=document.getElementById('prob-list');
+  const probs=[
+    {icon:'&#9889;',name:'Power coverage',val:powerDemand>0?Math.round(powerRatio*100)+'%':'N/A',cls:powerRatio>0.75?'green':powerRatio>0.4?'amber':'red'},
+    {icon:'&#128167;',name:'Water coverage',val:waterDemand>0?Math.round(waterRatio*100)+'%':'N/A',cls:waterRatio>0.75?'green':waterRatio>0.4?'amber':'red'},
+    {icon:'&#127979;',name:'Education',val:edu>0?edu+'pts':'None',cls:edu>50?'green':edu>0?'amber':'red'},
+    {icon:'&#10084;',name:'Healthcare',val:health>0?health+'pts':'None',cls:health>50?'green':health>0?'amber':'red'},
+    {icon:'&#128268;',name:'Safety',val:safety>0?safety+'pts':'None',cls:safety>50?'green':safety>0?'amber':'red'},
+    {icon:'&#128649;',name:'Traffic',val:trafficLevel,cls:trafficLevel==='Low'?'green':trafficLevel==='Medium'?'amber':'red'},
+    {icon:'&#128101;',name:'Unemployment',val:unemp+'%',cls:unemp<10?'green':unemp<25?'amber':'red'},
+  ];
+  probList.innerHTML=probs.map(p=>`<div class="prob-row"><span class="prob-icon">${p.icon}</span><span class="prob-name">${p.name}</span><span class="prob-val ${p.cls}">${p.val}</span></div>`).join('');
+
+  const pw=powerDemand>0?Math.min(100,Math.round(powerRatio*100)):100;
+  const ww=waterDemand>0?Math.min(100,Math.round(waterRatio*100)):100;
+  document.getElementById('m-power').textContent=pw+'%';document.getElementById('mf-power').style.width=pw+'%';
+  document.getElementById('m-water').textContent=ww+'%';document.getElementById('mf-water').style.width=ww+'%';
+  const ew=Math.min(100,edu);
+  document.getElementById('m-edu').textContent=edu+'pts';document.getElementById('mf-edu').style.width=ew+'%';
+  const hw=Math.min(100,health);
+  document.getElementById('m-health').textContent=health+'pts';document.getElementById('mf-health').style.width=hw+'%';
+  const sw=Math.min(100,safety);
+  document.getElementById('m-safety').textContent=safety+'pts';document.getElementById('mf-safety').style.width=sw+'%';
+
+  const bcEl=document.getElementById('bld-count');
+  bcEl.innerHTML=Object.entries(bCount).map(([k,v])=>`${BLDGS[k].name}: <b style="color:#c8cdd8">${v}</b>`).join('<br>')||'<span style="color:#3d4560">No buildings yet</span>';
+
+  const alerts=[];
+  if(powerRatio<0.5&&powerDemand>0)alerts.push('⚡ Power shortage!');
+  if(waterRatio<0.5&&waterDemand>0)alerts.push('💧 Water shortage!');
+  if(unemp>30)alerts.push('📉 High unemployment!');
+  if(happiness<30)alerts.push('😡 Citizens rioting!');
+  if(trafficLevel==='Critical')alerts.push('🚗 Traffic gridlock!');
+  if(popCap===0)alerts.push('🏠 Need housing!');
+  if(popCap>0&&jobs<population*0.5)alerts.push('💼 Not enough jobs!');
+  document.getElementById('alert-list').innerHTML=alerts.length?alerts.join('<br>'):'<span style="color:#3d4560">No critical issues</span>';
+
+  document.getElementById('rs-pop').textContent=population;
+  document.getElementById('rs-pop').className='ms-val '+(population>0?'green':'');
+  document.getElementById('rs-happy').textContent=happiness+'%';
+  document.getElementById('rs-happy').className='ms-val '+(happiness>65?'green':happiness>40?'amber':'red');
+  document.getElementById('rs-unemp').textContent=unemp+'%';
+  document.getElementById('rs-unemp').className='ms-val '+(unemp<10?'green':unemp<25?'amber':'red');
+}
+
+function calcMonthlyIncome(){
+  let income=0;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const t=grid[r][c];if(t&&BLDGS[t].income)income+=BLDGS[t].income;}
+  if(policies.tax)income=Math.floor(income*1.3);
+  if(policies.transit)income-=500;
+  if(policies.biz)income+=300;
+  if(policies.green)income-=400;
+  const maintenancePct=0.05;
+  let maintenance=0;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const t=grid[r][c];if(t)maintenance+=Math.floor(BLDGS[t].cost*maintenancePct);}
+  const popTax=Math.floor(population*2);
+  return{income,maintenance,popTax,net:income+popTax-maintenance};
+}
+
+function advanceMonth(){
+  monthIdx=(monthIdx+1)%12;
+  if(monthIdx===0)year++;
+  turn++;
+  const fin=calcMonthlyIncome();
+  money+=fin.net;
+  if(money<0)money=0;
+
+  const powerRatio=powerDemand>0?Math.min(1,power/powerDemand):1;
+  const waterRatio=waterDemand>0?Math.min(1,water/waterDemand):1;
+  let growthRate=0.12;
+  if(happiness<40)growthRate=-0.05;
+  else if(happiness<55)growthRate=0.03;
+  else if(happiness>75)growthRate=0.18;
+  if(powerRatio<0.5)growthRate-=0.08;
+  if(waterRatio<0.5)growthRate-=0.06;
+  const parkCount=Object.values(grid).flat().filter(t=>t==='park').length||[...Array(ROWS)].reduce((a,_,r)=>a+[...Array(COLS)].reduce((b,_,c)=>b+(grid[r][c]==='park'?1:0),0),0);
+  const parkBonus=parkCount*15;
+  const newResidents=Math.floor((popCap+parkBonus)*growthRate);
+  population=Math.min(popCap,Math.max(0,population+newResidents));
+
+  const fin2=calcMonthlyIncome();
+  document.getElementById('rs-income').textContent=`$${fin2.net>=0?'+':''}${fin2.net}`;
+  document.getElementById('rs-income').className='ms-val '+(fin2.net>=0?'amber':'red');
+  const finBreak=document.getElementById('finance-breakdown');
+  finBreak.innerHTML=`Commercial income: <b style="color:#5bbf7a">+$${fin2.income}</b><br>Population tax: <b style="color:#5bbf7a">+$${fin2.popTax}</b><br>Maintenance: <b style="color:#e05555">-$${fin2.maintenance}</b><br>Policies: <b style="color:#7eb8f7">${fin2.income+fin2.popTax-fin2.maintenance-fin2.net>=0?'-':'+'} adjusted</b><br>Net: <b style="color:${fin2.net>=0?'#5bbf7a':'#e05555'}">$${fin2.net}</b>`;
+
+  addLog(`Month ${MONTHS[monthIdx]}, Year ${year}: Pop +${newResidents}, Treasury $${money}, Happiness ${happiness}%`,fin2.net<0?'warn':'');
+  maybeEvent();
+  recalc();draw();updateUI();
+}
+
+function maybeEvent(){
+  if(Math.random()>0.3)return;
+  const possible=[
+    {title:'Tech Company Arrival',desc:'A major tech company wants to set up an office in your city! Accept to gain 50 new workers and $2,000 funding.',bad:false,fn:()=>{money+=2000;population=Math.min(popCap,population+50);addLog('Tech company arrived! +$2000, +50 residents','good');}},
+    {title:'Water Main Burst',desc:'A water main has burst costing $800 in emergency repairs!',bad:true,fn:()=>{money=Math.max(0,money-800);addLog('Water main burst! -$800','danger');}},
+    {title:'Economic Boom',desc:'National economic growth brings $1,500 in tax revenue!',bad:false,fn:()=>{money+=1500;addLog('Economic boom! +$1500','good');}},
+    {title:'Traffic Accident',desc:'A major accident has snarled traffic. Happiness -5 for the month.',bad:true,fn:()=>{happiness=Math.max(0,happiness-5);addLog('Traffic accident impacted morale','warn');}},
+    {title:'Festival Grant',desc:'The state offers a $600 cultural grant. Accept?',bad:false,fn:()=>{money+=600;happiness=Math.min(100,happiness+5);addLog('Festival grant accepted! +$600, +happiness','good');}},
+    {title:'Fire!',desc:'A building catches fire! Emergency services cost $1,200.',bad:true,fn:()=>{money=Math.max(0,money-1200);addLog('Building fire! Emergency cost -$1200','danger');}},
+    {title:'New Residents',desc:'A wave of new residents is moving to your city! +30 population.',bad:false,fn:()=>{population=Math.min(popCap,population+30);addLog('Wave of new residents arrived!','good');}},
+    {title:'Power Outage',desc:'Aging grid causes a city-wide outage. Happiness -8.',bad:true,fn:()=>{happiness=Math.max(0,happiness-8);addLog('Power outage! Morale dropped','danger');}},
+  ];
+  const e=possible[Math.floor(Math.random()*possible.length)];
+  showMsg(e.title,e.desc,[
+    {label:'Accept / Handle',fn:()=>{e.fn();closeModal();recalc();draw();updateUI();}},
+    {label:'Ignore',fn:closeModal}
+  ]);
+}
+
+function showEventModal(){
+  maybeEvent();
+}
+
+function addLog(msg,cls=''){
+  const entry={msg,cls,turn,month:MONTHS[monthIdx],year};
+  log.unshift(entry);
+  if(log.length>50)log.pop();
+  const ll=document.getElementById('log-list');
+  ll.innerHTML=log.slice(0,30).map(l=>`<div class="log-entry ${l.cls}"><span class="tick">Y${l.year}/${l.month}</span>${l.msg}</div>`).join('');
+}
+
+function updateUI(){
+  document.getElementById('st-money').textContent='$'+money.toLocaleString();
+  document.getElementById('st-pop').textContent=population.toLocaleString();
+  document.getElementById('st-year').textContent=year;
+  document.getElementById('st-month').textContent=MONTHS[monthIdx];
+  document.getElementById('bd-year').textContent=year;
+  document.getElementById('bd-month').textContent=MONTHS[monthIdx];
+  document.getElementById('bd-turn').textContent=turn;
+  recalc();
+}
+
+function selectTool(t){
+  selectedTool=t;
+  document.querySelectorAll('.build-btn').forEach(b=>b.classList.remove('selected'));
+  if(t&&document.getElementById('btn-'+t))document.getElementById('btn-'+t).classList.add('selected');
+  document.getElementById('sel-tool').textContent=t?BLDGS[t]?.name||t.charAt(0).toUpperCase()+t.slice(1):'None — click BUILD to select';
+  draw();
+}
+
+function switchTab(tab){
+  ['build','stats','log'].forEach(t=>{
+    document.getElementById('panel-'+t).classList.toggle('hidden',t!==tab);
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+}
+
+function updatePolicies(){
+  policies.tax=document.getElementById('pol-tax').checked;
+  policies.transit=document.getElementById('pol-transit').checked;
+  policies.biz=document.getElementById('pol-biz').checked;
+  policies.green=document.getElementById('pol-green').checked;
+  recalc();updateUI();
+}
+
+function showMsg(title,desc,btns){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-desc').textContent=desc;
+  const mb=document.getElementById('modal-btns');
+  mb.innerHTML='';
+  btns.forEach(b=>{
+    const el=document.createElement('button');
+    el.className='action-btn'+(b.label.includes('Accept')||b.label.includes('Handle')?' primary':'');
+    el.textContent=b.label;
+    el.onclick=b.fn;
+    mb.appendChild(el);
+  });
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('show');}
+function confirmNewGame(){showMsg('New Game','Start a new city? All progress will be lost.',[{label:'Yes, restart',fn:()=>{for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)grid[r][c]=null;money=12000;population=0;happiness=72;turn=1;year=1;monthIdx=0;policies={tax:false,transit:false,biz:false,green:false};log=[];document.getElementById('pol-tax').checked=false;document.getElementById('pol-transit').checked=false;document.getElementById('pol-biz').checked=false;document.getElementById('pol-green').checked=false;addLog('New city founded! Build houses to attract residents.','good');closeModal();recalc();draw();updateUI();}},{label:'Cancel',fn:closeModal}]);}
+
+addLog('Welcome! Start by placing houses, then shops for jobs.','good');
+addLog('Build a Power Plant and Water Tower to serve your population.','');
+setTimeout(()=>{resize();recalc();updateUI();},100);
+</script>
